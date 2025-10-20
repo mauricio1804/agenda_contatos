@@ -153,19 +153,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      if (contacts[index].id != null) {
-                        contactHelper.deleteContact(contacts[index].id!);
-                        setState(() {
-                          contacts.removeAt(index);
-                          Navigator.pop(context);
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Erro: contato não encontrado"),
-                          ),
-                        );
-                      }
+                      _showDeleteConfirmationDialog(context, index);
                     },
                     child: Text(
                       "Excluir",
@@ -210,5 +198,58 @@ class _HomePageState extends State<HomePage> {
         break;
     }
     setState(() {});
+  }
+
+  Future<void> _showDeleteConfirmationDialog(
+    BuildContext context,
+    int index,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // usuário deve clicar em um botão para sair
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar exclusão'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Você tem certeza que deseja excluir este contato?'),
+                SizedBox(height: 10),
+                Text(
+                  contacts[index].name ?? '',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Fecha o diálogo
+                Navigator.of(context).pop(); // Fecha o menu de opções
+              },
+            ),
+            TextButton(
+              child: Text('Excluir', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                if (contacts[index].id != null) {
+                  contactHelper.deleteContact(contacts[index].id!);
+                  setState(() {
+                    contacts.removeAt(index);
+                    Navigator.of(context).pop(); // Fecha o diálogo
+                    Navigator.of(context).pop(); // Fecha o menu de opções
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Erro: contato não encontrado")),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
