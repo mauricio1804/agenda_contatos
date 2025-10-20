@@ -22,6 +22,7 @@ class _ContactPageState extends State<ContactPage> {
   bool _userEdited = false;
   bool _isValidatingEmail = false;
   String? _emailError;
+  String? _phoneError;
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -158,11 +159,11 @@ class _ContactPageState extends State<ContactPage> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(labelText: "Nome"),
-              onChanged: (text) => {
-                _userEdited = true,
+              onChanged: (text) {
+                _userEdited = true;
                 setState(() {
                   _editContact?.name = text;
-                }),
+                });
               },
             ),
             TextField(
@@ -182,6 +183,7 @@ class _ContactPageState extends State<ContactPage> {
                     ? Icon(Icons.check_circle, color: Colors.green)
                     : null,
               ),
+              keyboardType: TextInputType.emailAddress,
               onChanged: (text) {
                 _userEdited = true;
                 setState(() {
@@ -191,19 +193,38 @@ class _ContactPageState extends State<ContactPage> {
                   _validateEmail(text);
                 }
               },
-              keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               controller: _phoneController,
-              decoration: InputDecoration(labelText: "Telefone"),
-              onChanged: (text) => {
-                _userEdited = true,
-                setState(() {
-                  _editContact?.phone = text;
-                }),
-              },
+              decoration: InputDecoration(
+                labelText: "Telefone",
+                errorText: _phoneError,
+                helperText: "(##) #####-####",
+                suffixIcon: _phoneController.text.isNotEmpty
+                    ? Icon(
+                        _phoneError == null ? Icons.check_circle : Icons.error,
+                        color: _phoneError == null ? Colors.green : Colors.red,
+                      )
+                    : null,
+              ),
               keyboardType: TextInputType.phone,
               inputFormatters: [phoneMask],
+              onChanged: (text) {
+                _userEdited = true;
+                setState(() {
+                  _editContact?.phone = text;
+                  String digitsOnly = text.replaceAll(RegExp(r'\D'), '');
+                  if (text.isEmpty) {
+                    _phoneError = null;
+                  } else if (digitsOnly.length < 11) {
+                    _phoneError = 'Número incompleto';
+                  } else if (digitsOnly.length > 11) {
+                    _phoneError = 'Número muito longo';
+                  } else {
+                    _phoneError = null;
+                  }
+                });
+              },
             ),
           ],
         ),
@@ -230,6 +251,18 @@ class _ContactPageState extends State<ContactPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Por favor, corrija o email antes de salvar'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_phoneError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Por favor, corrija o número de telefone antes de salvar',
+          ),
           backgroundColor: Colors.red,
         ),
       );
